@@ -284,6 +284,7 @@
                 modal.classList.add('active');
             });
 
+            // ===== FUNÇÃO MODIFICADA PARA MÁXIMA QUALIDADE =====
             async function gerarImagemBlob() {
                 const renderContainer = document.createElement('div');
                 renderContainer.id = 'render-target';
@@ -298,10 +299,12 @@
                         width: 1080,
                         height: 1920,
                         useCORS: true,
-                        logging: false
+                        logging: false,
+                        scale: 2 // <<< ALTERAÇÃO 1: Renderiza com o dobro da resolução
                     });
                     
-                    return await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+                    // <<< ALTERAÇÃO 2: Salva como PNG (sem perdas)
+                    return await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 
                 } catch (error) {
                     console.error("Erro ao gerar imagem 1080x1920:", error);
@@ -315,10 +318,12 @@
                 }
             }
             
+            // ===== EVENTO DE COMPARTILHAMENTO MODIFICADO PARA PNG =====
             shareBtn.addEventListener('click', async () => { 
                 const blob = await gerarImagemBlob(); 
                 if (!blob) return; 
-                const file = new File([blob], 'convite-ensaio.jpeg', { type: 'image/jpeg' }); 
+                // <<< ALTERAÇÃO 3: Define o arquivo como PNG
+                const file = new File([blob], 'convite-ensaio.png', { type: 'image/png' }); 
                 try { 
                     await navigator.share({ title: 'Confirmação do Ensaio Fotográfico', files: [file] }); 
                 } catch (err) { 

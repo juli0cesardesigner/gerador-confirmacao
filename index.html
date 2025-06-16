@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Mensagem</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Biblioteca para gerar a imagem a partir do HTML -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --cor-texto: #686C6A;
+            --cor-fundo-campos: #F7F2F1;
+            --fonte-principal: 'Cormorant Garamond', serif;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 16px; }
+
+        body {
+            font-family: var(--fonte-principal);
+            color: var(--cor-texto);
+            background-color: #fcfbfa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        main {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        }
+        .form-group { margin-bottom: 20px; }
+        label {
+            display: block; margin-bottom: 8px;
+            font-size: 1.1rem; font-weight: 600;
+        }
+        input, select {
+            width: 100%; padding: 12px;
+            border: 1px solid #ccc; border-radius: 5px;
+            font-family: var(--fonte-principal); font-size: 1.2rem;
+            color: var(--cor-texto); background-color: var(--cor-fundo-campos);
+        }
+        #criarBotao {
+            width: 100%; padding: 15px; margin-top: 10px;
+            background-color: var(--cor-texto); color: white;
+            border: none; border-radius: 5px;
+            font-size: 1.3rem; font-weight: 600; cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #criarBotao:hover { background-color: #555856; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75); display: flex;
+            justify-content: center; align-items: center; z-index: 1000;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: #fdfdfd; border-radius: 8px;
+            max-width: 500px; width: 90%;
+            padding: 20px 15px; font-size: 1rem;
+        }
+        #modal-message-container {
+            background: white; padding: 25px 15px;
+            text-align: center; color: var(--cor-texto);
+            font-family: var(--fonte-principal); line-height: 1.6;
+        }
+        .modal-logo { max-width: 130px; margin: 0 auto 20px auto; }
+        #modal-message-container p { margin-bottom: 1em; text-align: left; }
+        #modal-message-container .assinatura { text-align: center; font-weight: 600; margin-top: 20px; }
+        .modal-actions {
+            margin-top: 25px; display: flex; gap: 15px; flex-direction: column;
+        }
+        .action-button {
+            padding: 12px; border: none; border-radius: 5px;
+            font-family: var(--fonte-principal); font-size: 1.1rem; font-weight: 600;
+            cursor: pointer; transition: background-color 0.3s ease;
+        }
+        #downloadBtn { background-color: var(--cor-texto); color: white; }
+        #shareBtn { background-color: #25D366; color: white; /* Cor do WhatsApp */ }
+
+        @media (min-width: 600px) {
+            main { padding: 40px; }
+            .modal-content { padding: 40px; font-size: 1.2rem; }
+            .modal-actions { flex-direction: row; }
+            .action-button { flex-grow: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <main>
+        <form id="ensaioForm">
+            <div class="form-group"><label for="nomeMae">Nome da mãe</label><input type="text" id="nomeMae" required></div>
+            <div class="form-group"><label for="nomeFilho">Nome do filho(a)</label><input type="text" id="nomeFilho" required></div>
+            <div class="form-group"><label for="dataEnsaio">Data do ensaio</label><input type="date" id="dataEnsaio" required></div>
+            <div class="form-group"><label for="horaEnsaio">Hora</label><input type="time" id="horaEnsaio" required></div>
+            <div class="form-group">
+                <label for="tipoEnsaio">Tipo do ensaio</label>
+                <select id="tipoEnsaio" required>
+                    <option value="" disabled selected>Selecione uma opção</option>
+                    <option>Gestante</option><option>Newborn</option><option>Acompanhamento</option>
+                </select>
+            </div>
+            <button type="submit" id="criarBotao">Criar</button>
+        </form>
+    </main>
+
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <!-- Esta é a área que será capturada -->
+            <div id="modal-message-container">
+                <!-- A IMAGEM ESTÁ EMBUTIDA DIRETAMENTE AQUI, resolvendo problemas de 'CORS' -->
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAbFBMVEX9//0AAAD8/PwCAgIAAAb6+vqurq7v7+9iYmLS0tLMzMzd3d2GhoYwMDDJyclxcXFra2t6enqVlZWBgYE5OTkoKChsbGwMDAyZmZlPT09CQkJISEgWFhYmJiaAgIApKQ81NTYNDRIkJRcpKBEqKhGz3BwIAAACeklEQVR4nO3c6XKCQBiGYcIQBKGgiPeivf+TbWxEUVvNVgyoXP82v2TzDGgSg9pDAAAAAAAAAAAAAAAAAAAAAAAAAADAn6TjHklk3zWstf2+5pP0P1y8ZpJb+8k8l9QY2+a19nMwStXw3Hk5G8S8Yprp9TqZDH+i16/yUvQY3/W1x/T41Qz2M9+y84hcvjJDNq+YofT0Vb0KdqzTaa0+S+/e5zX7Gg2Fw4S2G8l183S3CpaTbq79hFttC7e1v+y2+X6pW05r+4Wp/bIrdw4Gq19gB3zG3jMvtt8p49s1/Ibr97PffW3tL0/wY3vXGrtX/0rO5+X1j3uV4/8n7J+/fV8uLd28a38M2P1iN59R5Pq4c355xLbe5bK+x67tW9yGg6LdOB5+e+T07E9/wD5k9cjb8P9J9U6fT2Gf17V7/Y2s/C+gT3dveV06Bf+yI83jEfqpCqfD++o7L3b9r9i46Ffs4c3jM8fldqPc71tMfuGfsnO3xKPhd4KNP5d8SjcjdhwIej3wKNeiMYLgW4CgU+n4e/fJ7G4eN+5l/P+h+5n3O+D++hK3cOLl31b/bZc/uD4r33mH1k//0t5e8WwKjB+j5aV3n0i7p3f48Xj4eTq54O773qXbS6v7j420+e6K06yH5eP96k136Xm/b8yVbTzIeTj3mP9t2m9zC/+3rU+zO21kXWlVn/v5T+5x/8nAAAAAAAh/IUD2FkgUDA8DAAAAAAAAAAAAAIC3gD3EkgIDA8FDAAABgwPDgwMDBgYGw/Dwv5c7GAAAAAAAAAAAAAAAAAD+hP8D/nB17z0yRj8AAAAASUVORK5CYII=" alt="Logo" class="modal-logo">
+                <p>Olá <strong id="modal-nomeMae"></strong>,</p> 
+                <p>Recadinho para confirmar nosso ensaio de <strong id="modal-tipoEnsaio"></strong> amanhã dia <strong id="modal-dataEnsaio"></strong>, às <strong id="modal-horaEnsaio"></strong>.</p>
+                <p>Estarei esperando ansiosa para nossas fotinhas com baby <strong id="modal-nomeFilho"></strong>.</p>
+                <div class="modal-importante" style="margin-top:25px;">
+                    <p style="font-weight:700;"><strong>Importante!</strong></p>
+                    <ul style="list-style-type:none; padding:0;">
+                        <li>- O trânsito no centro da cidade é caótico, saia mais cedo de casa.</li>
+                        <li>- Chegue alguns minutos antes para aproveitarmos ao máximo nossa sessão.</li>
+                    </ul>
+                </div>
+                <p class="assinatura">Beijinhos, até amanhã.</p>
+                <p class="assinatura">Tia Hellen</p>
+            </div>
+            <!-- Botões de ação aparecerão aqui -->
+            <div class="modal-actions">
+                <button id="shareBtn" class="action-button">Compartilhar</button>
+                <button id="downloadBtn" class="action-button">Baixar Imagem</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('ensaioForm');
+            const modal = document.getElementById('modal');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const shareBtn = document.getElementById('shareBtn');
+            
+            // Verifica se o navegador suporta a API de compartilhamento
+            // e esconde o botão se não suportar.
+            if (!navigator.share) {
+                shareBtn.style.display = 'none';
+            }
+            
+            const formatarData = (dataString) => new Date(dataString + 'T00:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' });
+            
+            form.addEventListener('submit', (e) => {
+                e.preventDefault(); // Previne o envio padrão do formulário
+                
+                // Coleta os valores dos campos
+                const dados = {
+                    nomeMae: document.getElementById('nomeMae').value,
+                    nomeFilho: document.getElementById('nomeFilho').value,
+                    dataEnsaio: formatarData(document.getElementById('dataEnsaio').value),
+                    horaEnsaio: document.getElementById('horaEnsaio').value.slice(0,5),
+                    tipoEnsaio: document.getElementById('tipoEnsaio').value,
+                };
+                
+                // Preenche os campos do modal com os dados
+                document.getElementById('modal-nomeMae').textContent = dados.nomeMae;
+                document.getElementById('modal-nomeFilho').textContent = dados.nomeFilho;
+                document.getElementById('modal-dataEnsaio').textContent = dados.dataEnsaio;
+                document.getElementById('modal-horaEnsaio').textContent = dados.horaEnsaio;
+                document.getElementById('modal-tipoEnsaio').textContent = dados.tipoEnsaio;
+
+                // Mostra o modal
+                modal.classList.add('active');
+            });
+            
+            // Função para gerar a imagem a partir do modal
+            const gerarImagem = async () => {
+                const container = document.getElementById('modal-message-container');
+                try {
+                    // scale:2 para uma imagem de melhor resolução
+                    const canvas = await html2canvas(container, { scale: 2 });
+                    // Retorna um blob, que é o formato ideal para compartilhamento
+                    return await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+                } catch (error) {
+                    console.error("Erro ao gerar imagem:", error);
+                    alert("Ocorreu um erro ao gerar a imagem. Por favor, tente novamente.");
+                    return null;
+                }
+            };
+            
+            // Ação do botão de download
+            downloadBtn.addEventListener('click', async () => {
+                downloadBtn.textContent = 'Gerando...';
+                const blob = await gerarImagem();
+                if (blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'convite-ensaio.jpeg';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }
+                downloadBtn.textContent = 'Baixar Imagem';
+            });
+            
+            // Ação do botão de compartilhamento
+            shareBtn.addEventListener('click', async () => {
+                shareBtn.textContent = 'Gerando...';
+                const blob = await gerarImagem();
+                if (blob) {
+                    const file = new File([blob], 'convite-ensaio.jpeg', { type: 'image/jpeg' });
+                    try {
+                        await navigator.share({
+                            title: 'Confirmação do Ensaio Fotográfico',
+                            files: [file]
+                        });
+                    } catch(err) {
+                        if (err.name !== 'AbortError') {
+                             console.error("Erro no compartilhamento:", err);
+                        }
+                    }
+                }
+                shareBtn.textContent = 'Compartilhar';
+            });
+
+            // Fecha o modal se o usuário clicar no fundo escuro
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

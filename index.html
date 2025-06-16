@@ -116,6 +116,34 @@
             font-size: 1.2rem;
             cursor: pointer;
         }
+
+        /* --- ESTILOS PARA O RENDER TARGET INVISÍVEL 1080x1920 --- */
+        #render-target {
+            width: 1080px;
+            height: 1920px;
+            position: absolute;
+            top: 0;
+            left: -9999px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            color: var(--cor-texto);
+            font-family: var(--fonte-principal);
+            line-height: 1.5; 
+            padding: 80px 70px;
+            text-align: left;
+        }
+        #render-target .flex-spacer {
+            flex-grow: 1; 
+            min-height: 50px;
+        }
+        #render-target .message-section { width: 100%; margin-bottom: 2em; }
+        #render-target .message-section p, #render-target .message-section ul { font-size: 38px; }
+        #render-target .message-section h3 { font-size: 44px; font-weight: 700; margin-bottom: 0.8em; }
+        #render-target .logo-img { max-width: 250px; margin: 0 auto 3em auto; }
+        #render-target .subtle-separator { margin: 2.5em auto; width: 60%; height: 2px;}
+        #render-target .assinatura { font-size: 38px; }
+
     </style>
 </head>
 <body>
@@ -246,59 +274,36 @@
             });
 
             async function gerarImagemBlob() {
-                const sourceNode = document.getElementById('message-container');
+                const renderContainer = document.createElement('div');
+                renderContainer.id = 'render-target';
+                renderContainer.innerHTML = document.getElementById('message-container').innerHTML;
+                document.body.appendChild(renderContainer);
 
-                const renderNode = document.createElement('div');
-                document.body.appendChild(renderNode);
-                
-                renderNode.innerHTML = sourceNode.innerHTML;
-                renderNode.style.cssText = window.getComputedStyle(sourceNode).cssText;
-                renderNode.className = sourceNode.className; 
-
-                const sourceWidth = sourceNode.offsetWidth;
-                renderNode.style.position = 'absolute';
-                renderNode.style.left = '-9999px';
-                renderNode.style.top = '0';
-                renderNode.style.width = `${sourceWidth}px`;
-                renderNode.style.height = `${sourceWidth * (16 / 9)}px`;
-                renderNode.style.overflow = 'hidden';
-                renderNode.style.display = 'flex';
-                renderNode.style.borderRadius = '0';
-                
                 try {
                     shareBtn.textContent = 'Gerando...';
                     shareBtn.disabled = true;
-
-                    let attempts = 0;
-                    while (renderNode.scrollHeight > renderNode.clientHeight && attempts < 40) {
-                        const allTextElements = renderNode.querySelectorAll('p, li, h3, .assinatura, strong');
-                        allTextElements.forEach(el => {
-                            const currentSize = parseFloat(window.getComputedStyle(el).fontSize);
-                            el.style.fontSize = `${currentSize - 0.25}px`;
-                        });
-                        attempts++;
-                    }
                     
-                    const canvas = await html2canvas(renderNode, {
-                        scale: 2,
+                    const canvas = await html2canvas(renderContainer, {
+                        width: 1080,
+                        height: 1920,
                         useCORS: true,
-                        backgroundColor: '#ffffff'
+                        logging: false
                     });
-
-                    return await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
+                    
+                    return await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
 
                 } catch (error) {
-                    console.error("Erro ao gerar a imagem:", error);
-                    alert("Ocorreu um erro ao gerar a imagem.");
+                    console.error("Erro ao gerar imagem 1080x1920:", error);
+                    alert("Ocorreu um erro ao gerar a imagem. Tente novamente.");
                     return null;
 
                 } finally {
-                    document.body.removeChild(renderNode);
+                    document.body.removeChild(renderContainer);
                     shareBtn.textContent = 'Compartilhar Imagem';
                     shareBtn.disabled = false;
                 }
             }
-
+            
             shareBtn.addEventListener('click', async () => { 
                 const blob = await gerarImagemBlob(); 
                 if (!blob) return; 

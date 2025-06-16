@@ -34,7 +34,7 @@
             padding: 25px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }
         .form-group { margin-bottom: 20px; }
-        .form-group.hidden { display: none; }
+        .form-group.hidden, .hidden { display: none; }
         label { display: block; margin-bottom: 8px; font-size: 1.1rem; font-weight: 600; }
         input[type="text"], input[type="date"], input[type="time"], select {
             width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px;
@@ -91,10 +91,12 @@
         }
 
         .message-section { width: 100%; margin-bottom: 0.75em; }
+        #bloco-intro { text-align: center; }
+        #bloco-intro p { text-align: left; }
         .message-section p, .message-section ul { margin: 0; padding: 0; font-size: 1rem; }
         .message-section h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5em; }
-        .logo-img { display: block; max-width: 110px; margin: 0 auto 1.5em auto; }
         .message-section ul { list-style: none; padding-left: 0; }
+        .logo-img { display: block; max-width: 110px; margin: 1.5em auto 0; }
         #bloco-final { text-align: center; }
         .flex-spacer { flex-grow: 1; min-height: 1.5em; }
         .subtle-separator { border: 0; height: 1px; background-color: #e0e0e0; width: 50%; margin: 1.5em auto; }
@@ -117,7 +119,6 @@
             cursor: pointer;
         }
 
-        /* --- ESTILOS PARA O RENDER TARGET INVISÍVEL 1080x1920 --- */
         #render-target {
             width: 1080px;
             height: 1920px;
@@ -138,11 +139,14 @@
             min-height: 50px;
         }
         #render-target .message-section { width: 100%; margin-bottom: 2em; }
+        #render-target #bloco-intro { text-align: center; }
+        #render-target #bloco-intro p { text-align: left; }
         #render-target .message-section p, #render-target .message-section ul { font-size: 38px; }
         #render-target .message-section h3 { font-size: 44px; font-weight: 700; margin-bottom: 0.8em; }
-        #render-target .logo-img { max-width: 250px; margin: 0 auto 3em auto; }
         #render-target .subtle-separator { margin: 2.5em auto; width: 60%; height: 2px;}
         #render-target .assinatura { font-size: 38px; }
+        #render-target .logo-img { max-width: 220px; margin: 3em auto 0; }
+
 
     </style>
 </head>
@@ -154,7 +158,7 @@
             <div class="form-group"><label for="nomeMaeInput">Nome da Mãe</label><input type="text" id="nomeMaeInput" required></div>
             <div class="form-group hidden" id="filho-group"><label for="nomeFilhoInput">Nome do filho(a)</label><div class="child-gender-group"><input type="text" id="nomeFilhoInput"><div class="gender-options"><label><input type="radio" name="genero" value="M"><span class="gender-m">M</span></label><label><input type="radio" name="genero" value="F"><span class="gender-f">F</span></label></div></div></div>
             <div class="form-group sub-option hidden" id="gestante-no-name-group"><label><input type="checkbox" id="gestanteNoNameCheck"> Ainda não sei o nome do bebê</label></div>
-            <div class="form-group"><label>Data do ensaio</label><div class="date-options"><label><input type="radio" name="date_option" value="hoje" checked> Hoje</label><label><input type="radio" name="date_option" value="amanha"> Amanhã</label><label><input type="radio" name="date_option" value="outro"> Outra data</label></div><input type="date" id="dataEnsaio" class="hidden" required></div>
+            <div class="form-group"><label>Data do ensaio</label><div class="date-options"><label><input type="radio" name="date_option" value="hoje" checked> Hoje</label><label><input type="radio" name="date_option" value="amanha"> Amanhã</label><label><input type="radio" name="date_option" value="outro"> Outra data</label></div><input type="date" id="dataEnsaio" class="hidden"></div>
             <div class="form-group"><label for="horaEnsaio">Hora</label><input type="time" id="horaEnsaio" required></div>
             <button type="submit" id="criarBotao">Criar</button>
         </form>
@@ -190,7 +194,9 @@
 
             const updateDateInput = () => {
                 const selectedOption = document.querySelector('input[name="date_option"]:checked').value;
+                
                 dataEnsaioInput.classList.toggle('hidden', selectedOption !== 'outro');
+                dataEnsaioInput.required = (selectedOption === 'outro');
                 
                 if (selectedOption === 'hoje') {
                     dataEnsaioInput.value = getFormattedDate(new Date());
@@ -198,6 +204,10 @@
                     const tomorrow = new Date();
                     tomorrow.setDate(tomorrow.getDate() + 1);
                     dataEnsaioInput.value = getFormattedDate(tomorrow);
+                } else {
+                    if (!dataEnsaioInput.value) {
+                         dataEnsaioInput.value = getFormattedDate(new Date());
+                    }
                 }
             };
             dateOptionRadios.forEach(radio => radio.addEventListener('change', updateDateInput));
@@ -230,6 +240,7 @@
             };
 
             const getFraseComData = (dataString) => {
+                if (!dataString) return 'data a ser confirmada'; 
                 const hoje = new Date();
                 hoje.setHours(0, 0, 0, 0);
 
@@ -269,7 +280,7 @@
                 if(isGestanteSemNome) { pBabyHTML = `<p>Estarei esperando ansiosa para nossas fotinhas com o seu baby que está a caminho.</p>`; } 
                 else if(showFilhoText) { const p = document.querySelector('input[name="genero"]:checked')?.value === 'M' ? 'o' : 'a'; pBabyHTML = `<p>Estarei esperando ansiosa para nossas fotinhas com ${p} baby <strong>${nomeFilhoInput.value}</strong>.</p>`; }
 
-                document.getElementById('message-container').innerHTML = `<div class="message-section" id="bloco-intro"><img src="https://i.imgur.com/ARxhqmn.png" alt="Logo" class="logo-img"><h3>Confirmado!!!<br>Nosso ensaio está chegando ✨</h3><p>${getSaudacao()}, <strong>${document.getElementById('nomeMaeInput').value}</strong>!</p><p>Nosso ensaio <strong>${tipoEnsaioFinal}</strong> está confirmado para ${getFraseComData(dataEnsaioInput.value)}, às <strong>${document.getElementById('horaEnsaio').value.slice(0, 5)}</strong>.</p>${pBabyHTML}</div><div class="flex-spacer"></div><div class="message-section" id="bloco-checklist">${checklistIntro}<h3>✅ Preparativos Essenciais</h3><ul><li><strong>📍 Chegada:</strong> Para um trajeto sem pressa, <strong>saia um pouquinho mais cedo</strong> e fique atenta ao trânsito.</li><li><strong>⏰ Horário:</strong> Chegue no <strong>horário combinado</strong>. O estúdio estará preparado só para vocês.</li></ul></div><div class="message-section" id="bloco-dicas-especificas">${getDicas(tipoEnsaioSelect.value)}</div><div class="flex-spacer"></div><div class="message-section" id="bloco-final"><hr class="subtle-separator"><p>Qualquer dúvida, é só me chamar. Lembre-se, o dia é de vocês e a minha missão é cuidar de tudo para que a sua única tarefa seja relaxar e se emocionar.</p><p class="assinatura">Estou contando os minutos!<br>Com carinho, Tia Hellen</p></div>`;
+                document.getElementById('message-container').innerHTML = `<div class="message-section" id="bloco-intro"><h3>Confirmado!!!<br>Nosso ensaio está chegando ✨</h3><p>${getSaudacao()}, <strong>${document.getElementById('nomeMaeInput').value}</strong>!</p><p>Nosso ensaio <strong>${tipoEnsaioFinal}</strong> está confirmado para ${getFraseComData(dataEnsaioInput.value)}, às <strong>${document.getElementById('horaEnsaio').value.slice(0, 5)}</strong>.</p>${pBabyHTML}</div><div class="flex-spacer"></div><div class="message-section" id="bloco-checklist">${checklistIntro}<h3>✅ Preparativos Essenciais</h3><ul><li><strong>📍 Chegada:</strong> Para um trajeto sem pressa, <strong>saia um pouquinho mais cedo</strong> e fique atenta ao trânsito.</li><li><strong>⏰ Horário:</strong> Chegue no <strong>horário combinado</strong>. O estúdio estará preparado só para vocês.</li></ul></div><div class="message-section" id="bloco-dicas-especificas">${getDicas(tipoEnsaioSelect.value)}</div><div class="flex-spacer"></div><div class="message-section" id="bloco-final"><hr class="subtle-separator"><p>Qualquer dúvida, é só me chamar. Lembre-se, o dia é de vocês e a minha missão é cuidar de tudo para que a sua única tarefa seja relaxar e se emocionar.</p><p class="assinatura">Estou contando os minutos!<br>Com carinho,</p><img src="https://i.imgur.com/ARxhqmn.png" alt="Logo" class="logo-img"></div>`;
                 modal.classList.add('active');
             });
 
